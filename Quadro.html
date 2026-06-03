@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Birthday Switcher</title>
+
+  <style>
+    @property --accent {
+      syntax: "<color>";
+      inherits: true;
+      initial-value: #ef4444;
+    }
+
+    @property --accent-light {
+      syntax: "<color>";
+      inherits: true;
+      initial-value: #fca5a5;
+    }
+
+    @property --bg-one {
+      syntax: "<color>";
+      inherits: true;
+      initial-value: #991b1b;
+    }
+
+    @property --bg-two {
+      syntax: "<color>";
+      inherits: true;
+      initial-value: #f87171;
+    }
+
+    @property --card-glow {
+      syntax: "<color>";
+      inherits: true;
+      initial-value: rgba(239, 68, 68, 0.35);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --accent: #ef4444;
+      --accent-light: #fca5a5;
+      --bg-one: #991b1b;
+      --bg-two: #f87171;
+      --card-glow: rgba(239, 68, 68, 0.35);
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background:
+        radial-gradient(circle at top left, var(--bg-one), transparent 35%),
+        radial-gradient(circle at bottom right, var(--bg-two), transparent 30%),
+        #111116;
+      font-family: "Inter", "Segoe UI", sans-serif;
+      color: #ffffff;
+      padding: 110px 24px 24px;
+      overflow: hidden;
+      animation: backgroundMove 8s ease-in-out infinite alternate;
+      transition:
+        --accent 0.7s ease,
+        --accent-light 0.7s ease,
+        --bg-one 0.7s ease,
+        --bg-two 0.7s ease,
+        --card-glow 0.7s ease;
+    }
+
+    .brand {
+      position: fixed;
+      top: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+      font-size: clamp(2rem, 7vw, 4rem);
+      font-weight: 900;
+      letter-spacing: 0.22em;
+      text-align: center;
+      background: linear-gradient(135deg, #ffffff, var(--accent-light), var(--accent));
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 30px var(--card-glow);
+      animation: brandIntro 0.9s ease forwards, gradientText 3s ease infinite;
+      transition: text-shadow 0.5s ease;
+    }
+
+    .theme-flash {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0;
+      background: radial-gradient(circle, var(--accent-light), transparent 60%);
+      transform: scale(0.45);
+    }
+
+    .theme-flash.active {
+      animation: themeBurst 0.75s ease;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: min(100%, 440px);
+      display: grid;
+      gap: 20px;
+      animation: fadeIn 1s ease forwards;
+    }
+
+    .switcher {
+      padding: 18px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(18px);
+      animation: slideDown 0.8s ease forwards;
+      transition: 0.4s ease;
+    }
+
+    .switcher label {
+      display: block;
+      font-size: 0.75rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-light);
+      margin-bottom: 10px;
+      font-weight: 800;
+      transition: color 0.5s ease;
+    }
+
+    .switcher select {
+      width: 100%;
+      padding: 14px 16px;
+      border: none;
+      outline: none;
+      border-radius: 14px;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.12);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      transition: 0.3s ease;
+    }
+
+    .switcher select:hover,
+    .switcher select:focus {
+      box-shadow: 0 0 0 4px var(--card-glow);
+    }
+
+    .switcher option {
+      color: #111116;
+    }
+
+    .card {
+      position: relative;
+      overflow: hidden;
+      padding: 32px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(18px);
+      opacity: 0;
+      animation: slideUp 0.9s ease forwards, floatCard 4s ease-in-out infinite;
+      transition:
+        transform 0.4s ease,
+        opacity 0.4s ease,
+        filter 0.4s ease,
+        box-shadow 0.4s ease;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-left: 5px solid var(--accent);
+      pointer-events: none;
+      transition: border-color 0.5s ease;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      right: -60px;
+      top: -60px;
+      background: var(--card-glow);
+      border-radius: 50%;
+      filter: blur(12px);
+      animation: glowMove 5s ease-in-out infinite alternate;
+      transition: background 0.5s ease;
+    }
+
+    .label {
+      position: relative;
+      z-index: 1;
+      font-size: 0.8rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-light);
+      margin-bottom: 12px;
+      font-weight: 700;
+      transition: color 0.5s ease;
+    }
+
+    .birthday-card.switching-out {
+      transform: translateY(14px) scale(0.96) rotateX(10deg);
+      opacity: 0.25;
+      filter: blur(8px);
+    }
+
+    .birthday-card.switching-in {
+      animation: birthdayPop 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) forwards;
+    }
+
+    .birthday-title {
+      position: relative;
+      z-index: 1;
+      font-size: clamp(2.8rem, 10vw, 4.4rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #ffffff, var(--accent-light), var(--accent));
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 14px;
+      animation: gradientText 3s ease infinite;
+    }
+
+    .birthday-info {
+      position: relative;
+      z-index: 1;
+      font-size: 1.35rem;
+      color: #f4f4f7;
+      line-height: 1.5;
+      font-weight: 500;
+    }
+
+    .birthday-info span {
+      display: block;
+      color: #bdb7cc;
+      font-size: 1rem;
+      margin-top: 4px;
+    }
+
+    .card:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 32px 80px var(--card-glow);
+    }
+
+    @keyframes brandIntro {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px) scale(0.9);
+        filter: blur(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+        filter: blur(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes birthdayPop {
+      0% {
+        opacity: 0.2;
+        filter: blur(8px);
+        transform: translateY(16px) scale(0.94);
+      }
+
+      65% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(-6px) scale(1.03);
+      }
+
+      100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes floatCard {
+      0%, 100% {
+        translate: 0 0;
+      }
+
+      50% {
+        translate: 0 -8px;
+      }
+    }
+
+    @keyframes gradientText {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    @keyframes glowMove {
+      from {
+        transform: translate(0, 0) scale(1);
+      }
+
+      to {
+        transform: translate(-30px, 30px) scale(1.25);
+      }
+    }
+
+    @keyframes backgroundMove {
+      from {
+        background-position: 0% 0%;
+      }
+
+      to {
+        background-position: 100% 100%;
+      }
+    }
+
+    @keyframes themeBurst {
+      0% {
+        opacity: 0.25;
+        transform: scale(0.45);
+      }
+
+      45% {
+        opacity: 0.18;
+        transform: scale(1.2);
+      }
+
+      100% {
+        opacity: 0;
+        transform: scale(1.8);
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding-top: 95px;
+      }
+
+      .brand {
+        top: 24px;
+        letter-spacing: 0.16em;
+      }
+
+      .card {
+        padding: 24px;
+        border-radius: 20px;
+      }
+
+      .birthday-info {
+        font-size: 1.15rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h1 class="brand">QUADRO</h1>
+
+  <div class="theme-flash" id="themeFlash"></div>
+
+  <main class="container">
+    <div class="switcher">
+      <label for="personSelect">Choose Name</label>
+
+      <select id="personSelect">
+        <option value="Alexa">Alexa</option>
+        <option value="Christian">Christian</option>
+        <option value="Danica">Danica</option>
+        <option value="Kiah">Kiah</option>
+      </select>
+    </div>
+
+    <section class="card birthday-card" id="birthdayCard">
+      <p class="label">Special Day</p>
+
+      <h1 class="birthday-title" id="birthdayTitle">Alexa</h1>
+
+      <p class="birthday-info">
+        Birthday
+        <span id="birthdayDate">August 19, 2004</span>
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const personSelect = document.getElementById("personSelect");
+    const birthdayTitle = document.getElementById("birthdayTitle");
+    const birthdayDate = document.getElementById("birthdayDate");
+    const birthdayCard = document.getElementById("birthdayCard");
+    const themeFlash = document.getElementById("themeFlash");
+
+    const people = {
+      Alexa: {
+        birthday: "August 19, 2004",
+        accent: "#ef4444",
+        accentLight: "#fca5a5",
+        bgOne: "#991b1b",
+        bgTwo: "#f87171",
+        glow: "rgba(239, 68, 68, 0.35)"
+      },
+      Christian: {
+        birthday: "December 20, 2004",
+        accent: "#3b82f6",
+        accentLight: "#93c5fd",
+        bgOne: "#1d4ed8",
+        bgTwo: "#60a5fa",
+        glow: "rgba(59, 130, 246, 0.35)"
+      },
+      Danica: {
+        birthday: "March 9, 2009",
+        accent: "#22c55e",
+        accentLight: "#86efac",
+        bgOne: "#15803d",
+        bgTwo: "#4ade80",
+        glow: "rgba(34, 197, 94, 0.35)"
+      },
+      Kiah: {
+        birthday: "October 9, 2005",
+        accent: "#ec4899",
+        accentLight: "#f9a8d4",
+        bgOne: "#be185d",
+        bgTwo: "#f472b6",
+        glow: "rgba(236, 72, 153, 0.35)"
+      }
+    };
+
+    function applyTheme(person) {
+      document.documentElement.style.setProperty("--accent", person.accent);
+      document.documentElement.style.setProperty("--accent-light", person.accentLight);
+      document.documentElement.style.setProperty("--bg-one", person.bgOne);
+      document.documentElement.style.setProperty("--bg-two", person.bgTwo);
+      document.documentElement.style.setProperty("--card-glow", person.glow);
+    }
+
+    function switchPerson(name) {
+      const person = people[name];
+
+      birthdayCard.classList.remove("switching-in");
+      birthdayCard.classList.add("switching-out");
+
+      setTimeout(() => {
+        birthdayTitle.textContent = name;
+        birthdayDate.textContent = person.birthday;
+
+        applyTheme(person);
+
+        themeFlash.classList.remove("active");
+        void themeFlash.offsetWidth;
+        themeFlash.classList.add("active");
+
+        birthdayCard.classList.remove("switching-out");
+        birthdayCard.classList.add("switching-in");
+      }, 260);
+    }
+
+    personSelect.addEventListener("change", function () {
+      switchPerson(this.value);
+    });
+
+    applyTheme(people.Alexa);
+  </script>
+</body>
+</html>
